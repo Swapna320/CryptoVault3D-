@@ -1,0 +1,1327 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CryptoVault 3D - Advanced Cryptocurrency Dashboard</title>
+
+    <!-- Google Fonts -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Font Awesome -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- SheetJS for Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --primary: #6366f1;
+        --secondary: #8b5cf6;
+        --accent: #ec4899;
+        --dark: #0f172a;
+        --darker: #020617;
+        --light: #f1f5f9;
+        --glass: rgba(255, 255, 255, 0.05);
+        --glass-border: rgba(255, 255, 255, 0.1);
+      }
+
+      body {
+        font-family: "Inter", sans-serif;
+        background: linear-gradient(
+          135deg,
+          #0f172a 0%,
+          #1e293b 50%,
+          #0f172a 100%
+        );
+        color: var(--light);
+        min-height: 100vh;
+        overflow-x: hidden;
+        position: relative;
+      }
+
+      /* Animated Background */
+      .bg-animation {
+        position: fixed;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        z-index: -1;
+        background: radial-gradient(
+            circle at 20% 50%,
+            rgba(99, 102, 241, 0.1) 0%,
+            transparent 50%
+          ),
+          radial-gradient(
+            circle at 80% 80%,
+            rgba(139, 92, 246, 0.1) 0%,
+            transparent 50%
+          ),
+          radial-gradient(
+            circle at 40% 20%,
+            rgba(236, 72, 153, 0.1) 0%,
+            transparent 50%
+          );
+      }
+
+      .floating-crypto {
+        position: fixed;
+        font-size: 2rem;
+        opacity: 0.1;
+        animation: float 20s infinite linear;
+        z-index: -1;
+      }
+
+      @keyframes float {
+        from {
+          transform: translateY(100vh) rotate(0deg);
+        }
+        to {
+          transform: translateY(-100px) rotate(360deg);
+        }
+      }
+
+      /* Navigation */
+      nav {
+        position: fixed;
+        top: 0;
+        width: 100%;
+        padding: 1rem 2rem;
+        background: var(--glass);
+        backdrop-filter: blur(20px);
+        border-bottom: 1px solid var(--glass-border);
+        z-index: 1000;
+        transition: all 0.3s ease;
+      }
+
+      .nav-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .logo {
+        font-family: "Space Grotesk", sans-serif;
+        font-size: 1.5rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, var(--primary), var(--accent));
+        background-clip: text;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .nav-links {
+        display: flex;
+        gap: 2rem;
+        list-style: none;
+      }
+
+      .nav-links a {
+        color: var(--light);
+        text-decoration: none;
+        transition: all 0.3s ease;
+        position: relative;
+      }
+
+      .nav-links a:hover {
+        color: var(--primary);
+      }
+
+      .nav-links a::after {
+        content: "";
+        position: absolute;
+        bottom: -5px;
+        left: 0;
+        width: 0;
+        height: 2px;
+        background: var(--primary);
+        transition: width 0.3s ease;
+      }
+
+      .nav-links a:hover::after {
+        width: 100%;
+      }
+
+      /* Hero Section with 3D Coins */
+      .hero {
+        margin-top: 80px;
+        padding: 4rem 2rem;
+        text-align: center;
+        position: relative;
+        min-height: 500px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .hero-content {
+        max-width: 800px;
+        z-index: 2;
+      }
+      .hero h1 {
+        font-family: "Space Grotesk", sans-serif;
+        font-size: clamp(2.5rem, 5vw, 4rem);
+        font-weight: 700;
+        margin-bottom: 1rem;
+        background: linear-gradient(
+          135deg,
+          var(--primary),
+          var(--secondary),
+          var(--accent)
+        );
+        background-clip: text;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        animation: gradient 3s ease infinite;
+      }
+
+      @keyframes gradient {
+        0%,
+        100% {
+          filter: hue-rotate(0deg);
+        }
+        50% {
+          filter: hue-rotate(30deg);
+        }
+      }
+
+      .hero p {
+        font-size: 1.2rem;
+        color: #94a3b8;
+        margin-bottom: 2rem;
+      }
+
+      /* 3D Rotating Coins */
+      .coin-container {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        pointer-events: none;
+      }
+
+      .coin-3d {
+        position: absolute;
+        width: 80px;
+        height: 80px;
+        transform-style: preserve-3d;
+        animation: rotate3d 10s infinite linear;
+      }
+
+      .coin-3d.bitcoin {
+        top: 20%;
+        left: 10%;
+        animation-duration: 8s;
+      }
+
+      .coin-3d.ethereum {
+        top: 60%;
+        right: 15%;
+        animation-duration: 12s;
+        animation-direction: reverse;
+      }
+
+      .coin-3d.cardano {
+        bottom: 20%;
+        left: 20%;
+        animation-duration: 15s;
+      }
+
+      @keyframes rotate3d {
+        from {
+          transform: rotateY(0deg) rotateX(0deg);
+        }
+        to {
+          transform: rotateY(360deg) rotateX(360deg);
+        }
+      }
+
+      .coin-face {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        backface-visibility: hidden;
+        box-shadow: 0 0 30px rgba(99, 102, 241, 0.5);
+      }
+
+      .coin-face.front {
+        background: linear-gradient(135deg, #f7931a, #ffb84d);
+        transform: translateZ(40px);
+      }
+
+      .coin-face.back {
+        background: linear-gradient(135deg, #627eea, #8299ff);
+        transform: rotateY(180deg) translateZ(40px);
+      }
+
+      /* Main Container */
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem;
+      }
+
+      /* Glass Cards */
+      .glass-card {
+        background: var(--glass);
+        backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        border-radius: 20px;
+        padding: 2rem;
+        transition: all 0.3s ease;
+      }
+
+      .glass-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 40px rgba(99, 102, 241, 0.2);
+        border-color: rgba(99, 102, 241, 0.3);
+      }
+
+      /* Stats Grid */
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 3rem;
+      }
+
+      .stat-card {
+        background: linear-gradient(
+          135deg,
+          var(--glass),
+          rgba(99, 102, 241, 0.1)
+        );
+        border: 1px solid var(--glass-border);
+        border-radius: 15px;
+        padding: 1.5rem;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s ease;
+      }
+
+      .stat-card::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(
+          circle,
+          rgba(99, 102, 241, 0.1) 0%,
+          transparent 70%
+        );
+        animation: pulse 4s ease-in-out infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          transform: scale(1);
+          opacity: 0.5;
+        }
+        50% {
+          transform: scale(1.1);
+          opacity: 0.8;
+        }
+      }
+
+      .stat-card:hover {
+        transform: translateY(-5px) scale(1.02);
+        border-color: var(--primary);
+      }
+
+      .stat-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+      }
+
+      .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+      }
+
+      .stat-label {
+        color: #94a3b8;
+        font-size: 0.9rem;
+      }
+
+      .stat-change {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        margin-top: 0.5rem;
+      }
+
+      .positive {
+        background: rgba(34, 197, 94, 0.2);
+        color: #22c55e;
+      }
+
+      .negative {
+        background: rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+      }
+
+      /* Portfolio Section */
+      .portfolio-section {
+        margin-bottom: 3rem;
+      }
+
+      .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+      }
+
+      .section-title {
+        font-size: 1.8rem;
+        font-weight: 600;
+        font-family: "Space Grotesk", sans-serif;
+      }
+
+      .crypto-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0 10px;
+      }
+
+      .crypto-table th {
+        text-align: left;
+        padding: 1rem;
+        color: #94a3b8;
+        font-weight: 500;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+      }
+
+      .crypto-table td {
+        padding: 1rem;
+        background: var(--glass);
+        border: 1px solid var(--glass-border);
+      }
+
+      .crypto-table tr td:first-child {
+        border-radius: 10px 0 0 10px;
+      }
+
+      .crypto-table tr td:last-child {
+        border-radius: 0 10px 10px 0;
+      }
+
+      .crypto-table tbody tr {
+        transition: all 0.3s ease;
+      }
+
+      .crypto-table tbody tr:hover td {
+        background: rgba(99, 102, 241, 0.1);
+        transform: translateX(5px);
+      }
+
+      .crypto-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+      }
+
+      .crypto-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+      }
+
+      /* Charts Section */
+      .charts-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+        gap: 2rem;
+        margin-bottom: 3rem;
+      }
+
+      .chart-container {
+        position: relative;
+        height: 400px;
+      }
+
+      /* Download Section */
+      .download-section {
+        margin-bottom: 3rem;
+      }
+
+      .download-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+      }
+
+      .download-card {
+        background: linear-gradient(
+          135deg,
+          var(--glass),
+          rgba(139, 92, 246, 0.1)
+        );
+        border: 1px solid var(--glass-border);
+        border-radius: 15px;
+        padding: 2rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        cursor: pointer;
+      }
+
+      .download-card:hover {
+        transform: translateY(-10px) scale(1.02);
+        box-shadow: 0 20px 40px rgba(139, 92, 246, 0.3);
+        border-color: var(--secondary);
+        .download-icon {
+          font-size: 3rem;
+          margin-bottom: 1rem;
+          background: linear-gradient(135deg, var(--secondary), var(--accent));
+          background-clip: text;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+        }
+        -webkit-text-fill-color: transparent;
+      }
+
+      .download-btn {
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: white;
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 25px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-top: 1rem;
+      }
+
+      .download-btn:hover {
+        transform: scale(1.05);
+        box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
+      }
+
+      /* 3D Button */
+      .btn-3d {
+        position: relative;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: white;
+        border: none;
+        padding: 1rem 2rem;
+        border-radius: 10px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        transform-style: preserve-3d;
+        box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
+      }
+
+      .btn-3d:hover {
+        transform: translateY(-5px) rotateX(-10deg);
+        box-shadow: 0 15px 30px rgba(99, 102, 241, 0.4);
+      }
+
+      .btn-3d:active {
+        transform: translateY(-2px) rotateX(-5deg);
+      }
+
+      /* Footer */
+      footer {
+        background: var(--darker);
+        padding: 3rem 2rem 1rem;
+        margin-top: 5rem;
+        border-top: 1px solid var(--glass-border);
+      }
+
+      .footer-content {
+        max-width: 1400px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 2rem;
+        margin-bottom: 2rem;
+      }
+
+      .footer-section h3 {
+        margin-bottom: 1rem;
+        color: var(--primary);
+      }
+
+      .footer-section ul {
+        list-style: none;
+      }
+
+      .footer-section ul li {
+        margin-bottom: 0.5rem;
+      }
+
+      .footer-section a {
+        color: #94a3b8;
+        text-decoration: none;
+        transition: color 0.3s ease;
+      }
+
+      .footer-section a:hover {
+        color: var(--primary);
+      }
+
+      .social-links {
+        display: flex;
+        gap: 1rem;
+        margin-top: 1rem;
+      }
+
+      .social-links a {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--glass);
+        border: 1px solid var(--glass-border);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+      }
+
+      .social-links a:hover {
+        background: var(--primary);
+        transform: translateY(-5px);
+      }
+
+      /* Responsive */
+      @media (max-width: 768px) {
+        .nav-links {
+          display: none;
+        }
+
+        .charts-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .crypto-table {
+          font-size: 0.9rem;
+        }
+
+        .hero h1 {
+          font-size: 2rem;
+        }
+      }
+
+      /* Loading Animation */
+      .loading {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 3px solid var(--glass-border);
+        border-top-color: var(--primary);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* Notification */
+      .notification {
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: white;
+        padding: 1rem 2rem;
+        border-radius: 10px;
+        box-shadow: 0 10px 30px rgba(99, 102, 241, 0.4);
+        transform: translateX(400px);
+        transition: transform 0.3s ease;
+        z-index: 2000;
+      }
+
+      .notification.show {
+        transform: translateX(0);
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Animated Background -->
+    <div class="bg-animation"></div>
+
+    <!-- Floating Crypto Symbols -->
+    <div class="floating-crypto" style="left: 10%; animation-delay: 0s">₿</div>
+    <div class="floating-crypto" style="left: 30%; animation-delay: 3s">Ξ</div>
+    <div class="floating-crypto" style="left: 50%; animation-delay: 6s">₮</div>
+    <div class="floating-crypto" style="left: 70%; animation-delay: 9s">◈</div>
+    <div class="floating-crypto" style="left: 90%; animation-delay: 12s">⬡</div>
+
+    <!-- Navigation -->
+    <nav>
+      <div class="nav-container">
+        <div class="logo">
+          <i class="fas fa-cube"></i>
+          CryptoVault 3D
+        </div>
+        <ul class="nav-links">
+          <li><a href="#dashboard">Dashboard</a></li>
+          <li><a href="#portfolio">Portfolio</a></li>
+          <li><a href="#charts">Analytics</a></li>
+          <li><a href="#downloads">Downloads</a></li>
+          <li><a href="#contact">Contact</a></li>
+        </ul>
+      </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+      <div class="coin-container">
+        <div class="coin-3d bitcoin">
+          <div class="coin-face front">₿</div>
+          <div class="coin-face back">BTC</div>
+        </div>
+        <div class="coin-3d ethereum">
+          <div class="coin-face front">Ξ</div>
+          <div class="coin-face back">ETH</div>
+        </div>
+        <div class="coin-3d cardano">
+          <div class="coin-face front">₳</div>
+          <div class="coin-face back">ADA</div>
+        </div>
+      </div>
+      <div class="hero-content">
+        <h1>Welcome to the Future of Crypto</h1>
+        <p>
+          Track, analyze, and manage your cryptocurrency portfolio with our
+          advanced 3D dashboard
+        </p>
+        <button class="btn-3d" onclick="scrollToSection('dashboard')">
+          <i class="fas fa-rocket"></i> Get Started
+        </button>
+      </div>
+    </section>
+
+    <!-- Main Container -->
+    <div class="container">
+      <!-- Stats Grid -->
+      <section id="dashboard" class="stats-grid">
+        <div class="stat-card">
+          <div
+            class="stat-icon"
+            style="background: linear-gradient(135deg, #f7931a, #ffb84d)"
+          >
+            <i class="fab fa-bitcoin"></i>
+          </div>
+          <div class="stat-value">$43,521</div>
+          <div class="stat-label">Bitcoin Price</div>
+          <span class="stat-change positive">+5.23%</span>
+        </div>
+
+        <div class="stat-card">
+          <div
+            class="stat-icon"
+            style="background: linear-gradient(135deg, #627eea, #8299ff)"
+          >
+            <i class="fab fa-ethereum"></i>
+          </div>
+          <div class="stat-value">$2,245</div>
+          <div class="stat-label">Ethereum Price</div>
+          <span class="stat-change positive">+3.45%</span>
+        </div>
+
+        <div class="stat-card">
+          <div
+            class="stat-icon"
+            style="background: linear-gradient(135deg, #26a17b, #4fd1a5)"
+          >
+            <i class="fas fa-chart-line"></i>
+          </div>
+          <div class="stat-value">$1.82T</div>
+          <div class="stat-label">Total Market Cap</div>
+          <span class="stat-change positive">+2.15%</span>
+        </div>
+
+        <div class="stat-card">
+          <div
+            class="stat-icon"
+            style="background: linear-gradient(135deg, #ec4899, #f472b6)"
+          >
+            <i class="fas fa-exchange-alt"></i>
+          </div>
+          <div class="stat-value">$89.2B</div>
+          <div class="stat-label">24h Volume</div>
+          <span class="stat-change negative">-1.23%</span>
+        </div>
+      </section>
+
+      <!-- Portfolio Section -->
+      <section id="portfolio" class="portfolio-section">
+        <div class="glass-card">
+          <div class="section-header">
+            <h2 class="section-title">Your Portfolio</h2>
+            <button class="btn-3d" onclick="refreshPortfolio()">
+              <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+          </div>
+
+          <table class="crypto-table">
+            <thead>
+              <tr>
+                <th>Cryptocurrency</th>
+                <th>Price</th>
+                <th>24h Change</th>
+                <th>Holdings</th>
+                <th>Value</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="portfolioTable">
+              <tr>
+                <td>
+                  <div class="crypto-info">
+                    <div
+                      class="crypto-icon"
+                      style="
+                        background: linear-gradient(135deg, #f7931a, #ffb84d);
+                      "
+                    >
+                      <i class="fab fa-bitcoin"></i>
+                    </div>
+                    <div>
+                      <div style="font-weight: 600">Bitcoin</div>
+                      <div style="font-size: 0.85rem; color: #94a3b8">BTC</div>
+                    </div>
+                  </div>
+                </td>
+                <td>$43,521</td>
+                <td><span class="stat-change positive">+5.23%</span></td>
+                <td>0.5 BTC</td>
+                <td>$21,760.50</td>
+                <td>
+                  <button
+                    class="download-btn"
+                    style="padding: 0.5rem 1rem; font-size: 0.85rem"
+                  >
+                    Trade
+                  </button>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="crypto-info">
+                    <div
+                      class="crypto-icon"
+                      style="
+                        background: linear-gradient(135deg, #627eea, #8299ff);
+                      "
+                    >
+                      <i class="fab fa-ethereum"></i>
+                    </div>
+                    <div>
+                      <div style="font-weight: 600">Ethereum</div>
+                      <div style="font-size: 0.85rem; color: #94a3b8">ETH</div>
+                    </div>
+                  </div>
+                </td>
+                <td>$2,245</td>
+                <td><span class="stat-change positive">+3.45%</span></td>
+                <td>5 ETH</td>
+                <td>$11,225.00</td>
+                <td>
+                  <button
+                    class="download-btn"
+                    style="padding: 0.5rem 1rem; font-size: 0.85rem"
+                  >
+                    Trade
+                  </button>
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="crypto-info">
+                    <div
+                      class="crypto-icon"
+                      style="
+                        background: linear-gradient(135deg, #0033ad, #0066ff);
+                      "
+                    >
+                      <span style="font-weight: bold">₮</span>
+                    </div>
+                    <div>
+                      <div style="font-weight: 600">Tether</div>
+                      <div style="font-size: 0.85rem; color: #94a3b8">USDT</div>
+                    </div>
+                  </div>
+                </td>
+                <td>$1.00</td>
+                <td><span class="stat-change positive">+0.01%</span></td>
+                <td>10,000 USDT</td>
+                <td>$10,000.00</td>
+                <td>
+                  <button
+                    class="download-btn"
+                    style="padding: 0.5rem 1rem; font-size: 0.85rem"
+                  >
+                    Trade
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Charts Section -->
+      <section id="charts" class="charts-grid">
+        <div class="glass-card">
+          <h3 class="section-title">Price Chart</h3>
+          <div class="chart-container">
+            <canvas id="priceChart"></canvas>
+          </div>
+        </div>
+
+        <div class="glass-card">
+          <h3 class="section-title">Portfolio Distribution</h3>
+          <div class="chart-container">
+            <canvas id="distributionChart"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <!-- Download Section -->
+      <section id="downloads" class="download-section">
+        <div class="glass-card">
+          <h2 class="section-title">Download Templates & Reports</h2>
+          <div class="download-grid">
+            <div class="download-card" onclick="downloadCSV()">
+              <div class="download-icon">
+                <i class="fas fa-file-csv"></i>
+              </div>
+              <h3>Portfolio CSV</h3>
+              <p style="color: #94a3b8; margin: 1rem 0">
+                Download your portfolio data in CSV format
+              </p>
+              <button class="download-btn">
+                <i class="fas fa-download"></i> Download CSV
+              </button>
+            </div>
+
+            <div class="download-card" onclick="downloadExcel()">
+              <div class="download-icon">
+                <i class="fas fa-file-excel"></i>
+              </div>
+              <h3>Portfolio Excel</h3>
+              <p style="color: #94a3b8; margin: 1rem 0">
+                Export your portfolio to Excel spreadsheet
+              </p>
+              <button class="download-btn">
+                <i class="fas fa-download"></i> Download Excel
+              </button>
+            </div>
+
+            <div class="download-card" onclick="downloadReport()">
+              <div class="download-icon">
+                <i class="fas fa-file-pdf"></i>
+              </div>
+              <h3>Monthly Report</h3>
+              <p style="color: #94a3b8; margin: 1rem 0">
+                Generate detailed monthly performance report
+              </p>
+              <button class="download-btn">
+                <i class="fas fa-download"></i> Download Report
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Footer -->
+    <footer id="contact">
+      <div class="footer-content">
+        <div class="footer-section">
+          <h3>CryptoVault 3D</h3>
+          <p style="color: #94a3b8">
+            Your trusted partner in cryptocurrency portfolio management
+          </p>
+          <div class="social-links">
+            <a href="#"><i class="fab fa-twitter"></i></a>
+            <a href="#"><i class="fab fa-telegram"></i></a>
+            <a href="#"><i class="fab fa-discord"></i></a>
+            <a href="#"><i class="fab fa-github"></i></a>
+          </div>
+        </div>
+
+        <div class="footer-section">
+          <h3>Quick Links</h3>
+          <ul>
+            <li><a href="#dashboard">Dashboard</a></li>
+            <li><a href="#portfolio">Portfolio</a></li>
+            <li><a href="#charts">Analytics</a></li>
+            <li><a href="#downloads">Downloads</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-section">
+          <h3>Resources</h3>
+          <ul>
+            <li><a href="#">API Documentation</a></li>
+            <li><a href="#">Trading Guide</a></li>
+            <li><a href="#">Security Tips</a></li>
+            <li><a href="#">FAQ</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-section">
+          <h3>Contact</h3>
+          <ul>
+            <li>
+              <a href="mailto:support@cryptovault3d.com"
+                >support@cryptovault3d.com</a
+              >
+            </li>
+            <li><a href="#">Live Chat</a></li>
+            <li><a href="#">Support Center</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div
+        style="
+          text-align: center;
+          padding-top: 2rem;
+          border-top: 1px solid var(--glass-border);
+          color: #94a3b8;
+        "
+      >
+        <p>&copy; 2024 CryptoVault 3D. All rights reserved.</p>
+      </div>
+    </footer>
+
+    <!-- Notification -->
+    <div id="notification" class="notification">
+      <i class="fas fa-check-circle"></i>
+      <span id="notificationText">Success!</span>
+    </div>
+
+    <script>
+      // Initialize Charts
+      const ctx1 = document.getElementById("priceChart").getContext("2d");
+      const priceChart = new Chart(ctx1, {
+        type: "line",
+        data: {
+          labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
+          datasets: [
+            {
+              label: "Bitcoin",
+              data: [35000, 38000, 42000, 39000, 41000, 43521],
+              borderColor: "#f7931a",
+              backgroundColor: "rgba(247, 147, 26, 0.1)",
+              tension: 0.4,
+            },
+            {
+              label: "Ethereum",
+              data: [1800, 2000, 2200, 2100, 2300, 2245],
+              borderColor: "#627eea",
+              backgroundColor: "rgba(98, 126, 234, 0.1)",
+              tension: 0.4,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              labels: {
+                color: "#f1f5f9",
+              },
+            },
+          },
+          scales: {
+            y: {
+              ticks: {
+                color: "#94a3b8",
+              },
+              grid: {
+                color: "rgba(148, 163, 184, 0.1)",
+              },
+            },
+            x: {
+              ticks: {
+                color: "#94a3b8",
+              },
+              grid: {
+                color: "rgba(148, 163, 184, 0.1)",
+              },
+            },
+          },
+        },
+      });
+
+      const ctx2 = document
+        .getElementById("distributionChart")
+        .getContext("2d");
+      const distributionChart = new Chart(ctx2, {
+        type: "doughnut",
+        data: {
+          labels: ["Bitcoin", "Ethereum", "Tether", "Cardano", "Others"],
+          datasets: [
+            {
+              data: [45, 25, 15, 10, 5],
+              backgroundColor: [
+                "#f7931a",
+                "#627eea",
+                "#26a17b",
+                "#0033ad",
+                "#ec4899",
+              ],
+              borderWidth: 0,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: "bottom",
+              labels: {
+                color: "#f1f5f9",
+                padding: 20,
+              },
+            },
+          },
+        },
+      });
+
+      // Download CSV Function
+      function downloadCSV() {
+        const data = [
+          [
+            "Cryptocurrency",
+            "Symbol",
+            "Price",
+            "24h Change",
+            "Holdings",
+            "Value",
+          ],
+          ["Bitcoin", "BTC", "$43,521", "+5.23%", "0.5", "$21,760.50"],
+          ["Ethereum", "ETH", "$2,245", "+3.45%", "5", "$11,225.00"],
+          ["Tether", "USDT", "$1.00", "+0.01%", "10,000", "$10,000.00"],
+        ];
+
+        let csvContent = data.map((row) => row.join(",")).join("\n");
+        const blob = new Blob([csvContent], { type: "text/csv" });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "portfolio.csv";
+        a.click();
+
+        showNotification("CSV file downloaded successfully!");
+      }
+
+      // Download Excel Function
+      function downloadExcel() {
+        const data = [
+          [
+            "Cryptocurrency",
+            "Symbol",
+            "Price",
+            "24h Change",
+            "Holdings",
+            "Value",
+          ],
+          ["Bitcoin", "BTC", 43521, 5.23, 0.5, 21760.5],
+          ["Ethereum", "ETH", 2245, 3.45, 5, 11225.0],
+          ["Tether", "USDT", 1.0, 0.01, 10000, 10000.0],
+        ];
+
+        const ws = XLSX.utils.aoa_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Portfolio");
+        XLSX.writeFile(wb, "portfolio.xlsx");
+
+        showNotification("Excel file downloaded successfully!");
+      }
+
+      // Download Report Function
+      function downloadReport() {
+        const reportContent = `
+      CRYPTOVOLT 3D - MONTHLY REPORT
+      Generated: ${new Date().toLocaleDateString()}
+
+      ====================================
+      PORTFOLIO SUMMARY
+      ====================================
+      Total Portfolio Value: $42,985.50
+      24h Change: +$1,245.32 (+2.98%)
+      Total Holdings: 4 cryptocurrencies
+
+      ====================================
+      ASSET BREAKDOWN
+      ====================================
+      Bitcoin (BTC): $21,760.50 (50.6%)
+      Ethereum (ETH): $11,225.00 (26.1%)
+      Tether (USDT): $10,000.00 (23.3%)
+
+      ====================================
+      PERFORMANCE METRICS
+      ====================================
+      Best Performer: Bitcoin (+5.23%)
+      Worst Performer: Tether (+0.01%)
+      Total Volume Traded: $89.2B
+
+      ====================================
+      RECOMMENDATIONS
+      ====================================
+      1. Consider diversifying into altcoins
+      2. Monitor Bitcoin resistance levels
+      3. Review stop-loss orders
+                  `;
+
+        const blob = new Blob([reportContent], { type: "text/plain" });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "monthly-report.txt";
+        a.click();
+
+        showNotification("Report downloaded successfully!");
+      }
+
+      // Show Notification
+      function showNotification(message) {
+        const notification = document.getElementById("notification");
+        const notificationText = document.getElementById("notificationText");
+        notificationText.textContent = message;
+        notification.classList.add("show");
+
+        setTimeout(() => {
+          notification.classList.remove("show");
+        }, 3000);
+      }
+
+      // Refresh Portfolio
+      function refreshPortfolio() {
+        const table = document.getElementById("portfolioTable");
+        table.style.opacity = "0.5";
+
+        setTimeout(() => {
+          // Simulate data refresh
+          table.style.opacity = "1";
+          showNotification("Portfolio refreshed successfully!");
+        }, 1000);
+      }
+
+      // Smooth Scroll
+      function scrollToSection(sectionId) {
+        document
+          .getElementById(sectionId)
+          .scrollIntoView({ behavior: "smooth" });
+      }
+
+      // Add parallax effect on scroll
+      window.addEventListener("scroll", () => {
+        const scrolled = window.pageYOffset;
+        const parallax = document.querySelector(".hero");
+        parallax.style.transform = `translateY(${scrolled * 0.5}px)`;
+      });
+
+      // Animate stats on scroll
+      const observerOptions = {
+        threshold: 0.5,
+        rootMargin: "0px",
+      };
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.style.animation = "fadeInUp 0.6s ease forwards";
+          }
+        });
+      }, observerOptions);
+
+      document.querySelectorAll(".stat-card").forEach((card) => {
+        observer.observe(card);
+      });
+
+      // Add fadeInUp animation
+      const style = document.createElement("style");
+      style.textContent = `
+                  @keyframes fadeInUp {
+                      from {
+                          opacity: 0;
+                          transform: translateY(30px);
+                      }
+                      to {
+                          opacity: 1;
+                          transform: translateY(0);
+                      }
+                  }
+              `;
+      document.head.appendChild(style);
+
+      // Update prices periodically (simulated)
+      setInterval(() => {
+        const priceElements = document.querySelectorAll(".stat-value");
+        priceElements.forEach((el, index) => {
+          if (index < 2) {
+            const currentPrice = parseFloat(
+              el.textContent.replace(/[$,]/g, "")
+            );
+            const change = (Math.random() - 0.5) * 100;
+            const newPrice = currentPrice + change;
+            el.textContent =
+              "$" +
+              newPrice.toLocaleString("en-US", {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0,
+              });
+          }
+        });
+      }, 5000);
+    </script>
+  </body>
+</html>
+
+Virus-free.www.avast.com
